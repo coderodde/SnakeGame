@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Graphics;
+import java.awt.Point;
 import java.awt.Toolkit;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
@@ -12,8 +13,13 @@ import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
+import java.util.Random;
 import javax.swing.JPanel;
+import static net.coderodde.snake.MotionDirection.EAST;
+import static net.coderodde.snake.MotionDirection.WEST;
 
 /**
  *
@@ -106,6 +112,24 @@ public class SnakePanel extends JPanel {
     private int gridLineThickness;
     
     /**
+     * The coordinates of a berry.
+     */
+    private Point currentBerryPoint;
+    
+    private final Random random = new Random();
+    
+    /**
+     * Specifies the current game state.
+     */
+    private enum GameState {
+        GAMING,
+        PAUSE,
+        STOP,
+    }
+    
+    private GameState gameState = GameState.STOP;
+    
+    /**
      * Constructs a new panel for displaying the game grid.
      * 
      * @param gridWidth         the width of the grid in cells.
@@ -118,14 +142,19 @@ public class SnakePanel extends JPanel {
         this.gridLineThickness = checkGridLineThickness(gridLineThickness);
         this.grid = getGrid(gridWidth, gridHeight);
         this.screenResolution = Toolkit.getDefaultToolkit().getScreenSize();
-        Dimension resolution = Toolkit.getDefaultToolkit().getScreenSize();
-        int aux1 = resolution.width - (gridWidth + 1) * gridThickness;
-        int aux2 = resolution.height - (gridHeight + 1) * gridThickness;
-        int aux1a = aux1 / gridWidth;
-        int aux2a = aux2 / gridHeight;
-        int cellWidthHeight = Math.min(aux1a, aux2a);
-        this.grid = new GridCell[gridHeight][gridWidth];
         this.setBackground(DEFAULT_WINDOW_BACKGROUND_COLOR);
+        
+        List<SnakeCompartment> snakeCompartmentList = 
+                Arrays.asList(new SnakeCompartment(EAST, 3, 0),
+                              new SnakeCompartment(EAST, 2, 0),
+                              new SnakeCompartment(EAST, 1, 0),
+                              new SnakeCompartment(EAST, 0, 0));
+        
+        this.snake = new Snake(snakeCompartmentList, WEST);
+        GameStepThread gameStepThread = new GameStepThread(snake,
+                                                           this.grid, 
+                                                           this);
+        gameStepThread.setStepDuration(2000L);
         
         addComponentListener(new ComponentAdapter() {
             public void componentResized(ComponentEvent componentEvent) {
@@ -135,6 +164,9 @@ public class SnakePanel extends JPanel {
                 component.repaint();
             }
         });
+        
+        this.currentBerryPoint = createBerry();
+        gameStepThread.start();
     }
     
     public void setSnake(Snake snake) {
@@ -219,8 +251,31 @@ public class SnakePanel extends JPanel {
                        gridLineThickness);
         }
         
-        g.setColor(Color.ORANGE);
-        g.fillRect(10, 800, 100, 100);
+        // Draw the berry.
+        g.setColor(berryColor);
+        int x = currentBerryPoint.x;
+        int y = currentBerryPoint.y;
+        g.fillRect(skipHorizontal + gridLineThickness 
+                                  + x * (gridLineThickness + cellLength),
+                   skipVertical + gridLineThickness
+                                + y * (gridLineThickness + cellLength),
+                   cellLength,
+                   cellLength);
+        
+        // Draw the snake.
+        g.setColor(snakeColor);
+        
+        for (SnakeCompartment snakeCompartment : snake) {
+            x = snakeCompartment.x;
+            y = snakeCompartment.y;
+            g.fillRect(
+                    skipHorizontal + gridLineThickness 
+                                   + x * (cellLength + gridLineThickness),
+                    skipVertical + gridLineThickness
+                                 + y * (cellLength + gridLineThickness),
+                    cellLength, 
+                    cellLength);
+        }
     }
     
     private int checkGridWidth(int gridWidth) {
@@ -251,6 +306,27 @@ public class SnakePanel extends JPanel {
         }
         
         return gridLineThickness;
+    }
+
+    private Point createBerry() {
+        Point berryPoint = new Point();
+        
+        while (true) {
+            int x = random.nextInt(gridWidth);
+            int y = random.nextInt(gridHeight);
+            
+            if (this.grid[y][x].equals(GridCell.WALL)) {
+                continue;
+            }
+            
+            if (snake.occupiesPoint(x, y)) {
+                continue;
+            }
+            
+            berryPoint.x = x;
+            berryPoint.y = y;
+            return berryPoint;
+        }
     }
     
     private static final class SnakeKeyListener implements KeyListener {

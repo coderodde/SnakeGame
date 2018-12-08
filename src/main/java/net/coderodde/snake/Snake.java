@@ -3,6 +3,7 @@ package net.coderodde.snake;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 
@@ -10,7 +11,7 @@ import java.util.Objects;
  *
  * @author rodde
  */
-public final class Snake {
+public final class Snake implements Iterable<SnakeCompartment> {
     
     private final Deque<SnakeCompartment> compartmentQueue = new ArrayDeque<>();
     private MotionDirection motionDirection;
@@ -28,7 +29,15 @@ public final class Snake {
                 "The input direction is null.");
     }
     
-    public void makeStep() {
+    public void makeStep(GridCell[][] grid) {
+        if (hitsWall(grid)) {
+            throw new WallCollisionException();
+        }
+        
+        if (eatsHimself()) {
+            throw new EatHimselfException();
+        }
+        
         SnakeCompartment headSnakeCompartment = compartmentQueue.getFirst();
         SnakeCompartment tailSnakeCompartment = compartmentQueue.removeLast();
         
@@ -90,6 +99,50 @@ public final class Snake {
         compartmentQueue.addLast(newSnakeCompartment);
     }
     
+    public boolean hitsWall(GridCell[][] grid) {
+        switch (motionDirection) {
+            case NORTH:
+                return hitsWallMovingToNorth(grid);
+                
+            case EAST:
+                return hitsWallMovingToEast(grid);
+                
+            case SOUTH:
+                return hitsWalMovingToSouth(grid);
+                
+            case WEST:
+                return hitsWalMovingToWest(grid);
+                
+            default:
+                throw new IllegalStateException("Should never get here.");
+        }
+    }
+    
+    public boolean eatsHimself() {
+        switch (motionDirection) {
+            case NORTH:
+                return eatsHimselfMovingToNorth();
+                
+            case EAST:
+                return eatsHimselfMovingToEast();
+                
+            case SOUTH:
+                return eatsHimselfMovingToSouth();
+                
+            case WEST:
+                return eatsHimselfMovingToWest();
+                
+            default:
+                throw new EnumConstantNotPresentException(GridCell.class, 
+                                                          "Unknown constant.");
+        }
+    }
+    
+    @Override
+    public Iterator<SnakeCompartment> iterator() {
+        return compartmentQueue.iterator();
+    }
+    
     List<SnakeCompartment> getSnakeCompartmentList() {
         return new ArrayList<>(compartmentQueue);
     }
@@ -117,5 +170,107 @@ public final class Snake {
                         "The snake is disconnected.");
             }
         }
+    }
+    
+    private boolean hitsWallMovingToNorth(GridCell[][] grid) {
+        SnakeCompartment headSnakeCompartment = compartmentQueue.getFirst();
+        int x = headSnakeCompartment.x;
+        int y = headSnakeCompartment.y;
+        
+        if (y == 0) {
+            return true;
+        }
+        
+        if (grid[y - 1][x].equals(GridCell.WALL)) {
+            return true;
+        }
+
+        return false;
+    }
+    
+    private boolean hitsWallMovingToEast(GridCell[][] grid) {
+        SnakeCompartment headSnakeCompartment = compartmentQueue.getFirst();
+        int x = headSnakeCompartment.x;
+        int y = headSnakeCompartment.y;
+ 
+        if (x == grid[0].length - 1) {
+            return true;
+        }
+        
+        if (grid[y][x + 1] == GridCell.WALL) {
+            return true;
+        }
+        
+        return false;
+    }
+    
+    private boolean hitsWalMovingToSouth(GridCell[][] grid) {
+        SnakeCompartment headSnakeCompartment = compartmentQueue.getFirst();
+        int x = headSnakeCompartment.x;
+        int y = headSnakeCompartment.y;
+        
+        if (y == grid.length - 1) {
+            return true;
+        }
+        
+        if (grid[y + 1][x] == GridCell.WALL) {
+            return true;
+        }
+        
+        return false;
+    }
+    
+    private boolean hitsWalMovingToWest(GridCell[][] grid) {
+        SnakeCompartment headSnakeCompartment = compartmentQueue.getFirst();
+        int x = headSnakeCompartment.x;
+        int y = headSnakeCompartment.y;
+        
+        if (x == 0) {
+            return true;
+        }
+        
+        if (grid[y][x - 1] == GridCell.WALL) {
+            return true;
+        }
+        
+        return false;
+    }
+    
+    private boolean eatsHimselfMovingToNorth() {
+        SnakeCompartment headSnakeCompartment = compartmentQueue.getFirst();
+        int x = headSnakeCompartment.x;
+        int y = headSnakeCompartment.y;
+        return occupiesPoint(x, y - 1);
+    }
+    
+    private boolean eatsHimselfMovingToEast() {
+        SnakeCompartment headSnakeCompartment = compartmentQueue.getFirst();
+        int x = headSnakeCompartment.x;
+        int y = headSnakeCompartment.y;
+        return occupiesPoint(x + 1, y);
+    }
+    
+    private boolean eatsHimselfMovingToSouth() {
+        SnakeCompartment headSnakeCompartment = compartmentQueue.getFirst();
+        int x = headSnakeCompartment.x;
+        int y = headSnakeCompartment.y;
+        return occupiesPoint(x, y + 1);
+    }
+    
+    private boolean eatsHimselfMovingToWest() {
+        SnakeCompartment headSnakeCompartment = compartmentQueue.getFirst();
+        int x = headSnakeCompartment.x;
+        int y = headSnakeCompartment.y;
+        return occupiesPoint(x - 1, y);
+    }
+    
+    boolean occupiesPoint(int x, int y) {
+        for (SnakeCompartment snakeCompartment : this) {
+            if (snakeCompartment.x == x && snakeCompartment.y == y) {
+                return true;
+            }
+        }
+        
+        return false;
     }
 }

@@ -26,6 +26,11 @@ public final class GameStepThread extends Thread {
     private final Snake snake;
     
     /**
+     * The game grid.
+     */
+    private final GridCell[][] grid;
+    
+    /**
      * The current step duration.
      */
     private volatile long stepDuration;
@@ -40,13 +45,23 @@ public final class GameStepThread extends Thread {
      */
     private volatile boolean pause;
     
+    private SnakePanel snakePanel;
+    
     /**
      * Constructs this game loop thread.
      * 
      * @param snake the snake to control..
      */
-    public GameStepThread(Snake snake) {
+    public GameStepThread(Snake snake, 
+                          GridCell[][] grid, 
+                          SnakePanel snakePanel) {
         this.snake = Objects.requireNonNull(snake, "The input snake is null.");
+        this.grid  = Objects.requireNonNull(grid, 
+                                            "The input game grid is null.");
+        this.snakePanel = Objects.requireNonNull(
+                snakePanel, 
+                "The input game panel is null.");
+        
         this.stepDuration = DEFAULT_STEP_DURATION;
         // this.halt andn this.pause is set to false by default.
     }
@@ -76,8 +91,15 @@ public final class GameStepThread extends Thread {
             if (pause) {
                 continue;
             }
-                
-            snake.makeStep();
+            
+            try {
+                snake.makeStep(grid);
+                snakePanel.repaint();
+            } catch (WallCollisionException ex) {
+                return;
+            } catch (EatHimselfException ex) {
+                return;
+            }
         }
     }
     
