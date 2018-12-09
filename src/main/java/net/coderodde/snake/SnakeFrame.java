@@ -1,6 +1,8 @@
 package net.coderodde.snake;
 
 import java.awt.Toolkit;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 
@@ -14,16 +16,23 @@ public class SnakeFrame extends JFrame {
     
     public SnakeFrame() {
         getContentPane().add(snakePanel);
-        getContentPane().setPreferredSize(Toolkit.getDefaultToolkit().getScreenSize());
+        snakePanel.setFocusable(true);
+        getContentPane().setPreferredSize(
+                Toolkit.getDefaultToolkit().getScreenSize());
         pack();
         setResizable(true);
         setVisible(true);
         repaint();
     }
     
+    public Snake getSnake() {
+        return snakePanel.getSnake();
+    }
+    
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            new SnakeFrame();
+            SnakeFrame snakeFrame = new SnakeFrame();
+            snakeFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         });
     }
 }

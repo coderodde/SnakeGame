@@ -1,5 +1,6 @@
 package net.coderodde.snake;
 
+import java.awt.Point;
 import java.util.Objects;
 
 /**
@@ -93,6 +94,14 @@ public final class GameStepThread extends Thread {
             }
             
             try {
+                Point snakeHeadCoordinates = snake.getSnakeHeadCoordinates();
+                Point berryCoordiinates = snakePanel.getCurrentBerryPoint();
+                
+                if (snakeHeadCoordinates.equals(berryCoordiinates)) {
+                    snake.grow();
+                    snakePanel.createNewBerry();
+                }
+                
                 snake.makeStep(grid);
                 snakePanel.repaint();
             } catch (WallCollisionException ex) {
@@ -101,6 +110,10 @@ public final class GameStepThread extends Thread {
                 return;
             }
         }
+    }
+    
+    public void togglePause() {
+        this.pause = !this.pause;
     }
     
     private long checkStepDuration(long stepDuration) {

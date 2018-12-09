@@ -150,13 +150,14 @@ public class SnakePanel extends JPanel {
                               new SnakeCompartment(EAST, 1, 0),
                               new SnakeCompartment(EAST, 0, 0));
         
-        this.snake = new Snake(snakeCompartmentList, WEST);
+        this.snake = new Snake(snakeCompartmentList, EAST);
         GameStepThread gameStepThread = new GameStepThread(snake,
                                                            this.grid, 
                                                            this);
-        gameStepThread.setStepDuration(2000L);
+        gameStepThread.setStepDuration(1000L);
         
         addComponentListener(new ComponentAdapter() {
+            @Override
             public void componentResized(ComponentEvent componentEvent) {
                 Component component = componentEvent.getComponent();
                 screenResolution.width = component.getWidth();
@@ -165,8 +166,54 @@ public class SnakePanel extends JPanel {
             }
         });
         
+        addKeyListener(new KeyListener(){
+            @Override
+            public void keyTyped(KeyEvent e) {}
+
+            @Override
+            public void keyPressed(KeyEvent e) {
+                switch (e.getKeyCode()) {
+                    case KeyEvent.VK_UP:
+                        snake.setDirection(MotionDirection.NORTH);
+                        break;
+
+                    case KeyEvent.VK_RIGHT:
+                        snake.setDirection(MotionDirection.EAST);
+                        break;
+
+                    case KeyEvent.VK_DOWN:
+                        snake.setDirection(MotionDirection.SOUTH);
+                        break;
+
+                    case KeyEvent.VK_LEFT:
+                        snake.setDirection(MotionDirection.WEST);
+                        break;
+
+                    case KeyEvent.VK_SPACE:
+                        gameStepThread.togglePause();
+                        break;
+                }
+            }
+
+            @Override
+            public void keyReleased(KeyEvent e) {}
+        });
+        
+//        SnakeGameKeyListener keyListener =
+//                new SnakeGameKeyListener(snake, gameStepThread);
+//        
+//        this.addKeyListener(keyListener);
         this.currentBerryPoint = createBerry();
+        gameStepThread.setPause(false);
         gameStepThread.start();
+    }
+    
+    public Snake getSnake() {
+        return this.snake;
+    }
+    
+    public Point getCurrentBerryPoint() {
+       return new Point(currentBerryPoint);
     }
     
     public void setSnake(Snake snake) {
@@ -276,6 +323,10 @@ public class SnakePanel extends JPanel {
                     cellLength, 
                     cellLength);
         }
+    }
+    
+    public void createNewBerry() {
+        this.currentBerryPoint = createBerry();
     }
     
     private int checkGridWidth(int gridWidth) {

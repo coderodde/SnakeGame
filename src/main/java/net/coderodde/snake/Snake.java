@@ -1,5 +1,6 @@
 package net.coderodde.snake;
 
+import java.awt.Point;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -97,6 +98,11 @@ public final class Snake implements Iterable<SnakeCompartment> {
         newSnakeCompartment.motionDirection =
                 lastSnakeCompartment.motionDirection;
         compartmentQueue.addLast(newSnakeCompartment);
+    }
+    
+    public Point getSnakeHeadCoordinates() {
+        return new Point(compartmentQueue.getFirst().x,
+                         compartmentQueue.getFirst().y);
     }
     
     public boolean hitsWall(GridCell[][] grid) {
